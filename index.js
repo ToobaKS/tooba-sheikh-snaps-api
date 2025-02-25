@@ -17,18 +17,6 @@ app.get("/tags", tags);
 app.get("/photos", photos);
 app.get("/photos/:id", photos);
 app.get("/photos/:id/comments", photos);
-// app.get("/photos", photos);
-
-// app.post("/api/v1/students", (req, res) => {
-//   const { name, program, grade } = req.body;
-//   const newStudent = {
-//     id: uuidv4(),
-//     name,
-//     program,
-//     grade,
-//   };
-//   students.push(newStudent);
-//   res.json(newStudent);
-// });
+app.post("/photos/:id/comments", photos);
 
 app.listen(port, () => console.log(`Listening on ${port}`));
