@@ -48,10 +48,10 @@ router.post("/photos/:id/comments", (req, res) => {
     timestamp: Date.now(),
   };
 
-  const photoIndex = photos.findIndex((photo) => photo.id === id);
+  const photo = photos.find((photo) => photo.id === id);
 
-  if (photoIndex !== -1) {
-    photos[photoIndex].comments.push(newComment);
+  if (photo) {
+    photo.comments.push(newComment);
     fs.writeFileSync("./data/photos.json", JSON.stringify(photos, null, 2));
     res.json(newComment);
   } else {
