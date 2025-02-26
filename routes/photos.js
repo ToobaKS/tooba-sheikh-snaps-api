@@ -37,6 +37,10 @@ router.post("/photos/:id/comments", (req, res) => {
   const { name, comment } = req.body;
   const photos = getPhotos();
 
+  if (!name || !comment) {
+    res.status(404).json({ error: "Invalid name and id" });
+  }
+
   const newComment = {
     id: uuidv4(),
     name,
@@ -50,6 +54,8 @@ router.post("/photos/:id/comments", (req, res) => {
     photos[photoIndex].comments.push(newComment);
     fs.writeFileSync("./data/photos.json", JSON.stringify(photos, null, 2));
     res.json(newComment);
+  } else {
+    res.status(404).json({ error: "Photo not found" });
   }
 });
 
