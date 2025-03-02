@@ -1,13 +1,19 @@
 import express from "express";
 import fs from "fs";
+import path from "path";
 import { v4 as uuidv4 } from "uuid";
 
 const router = express.Router();
+const DATA_FILE = path.resolve("./data/photos.json");
 
 function getPhotos() {
-  const photosData = fs.readFileSync("./data/photos.json");
-  const parsedData = JSON.parse(photosData);
-  return parsedData;
+  try {
+    const photosData = fs.readFileSync(DATA_FILE, "utf-8");
+    return JSON.parse(photosData);
+  } catch (error) {
+    console.error("Error reading photos data:", error);
+    throw new Error("Failed to load photos data.");
+  }
 }
 
 function getPhotoById(id) {
@@ -16,46 +22,77 @@ function getPhotoById(id) {
 }
 
 router.get("/photos", (req, res) => {
-  const photos = getPhotos();
-  res.json(photos);
+  try {
+    const photos = getPhotos();
+    res.json(photos);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 router.get("/photos/:id", (req, res) => {
-  const id = req.params.id;
-  const photo = getPhotoById(id);
-  res.json(photo);
+  try {
+    const id = req.params.id;
+    const photo = getPhotoById(id);
+
+    if (!photo) {
+      return res.status(404).json({ error: "Photo not found" });
+    }
+
+    res.json(photo);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 router.get("/photos/:id/comments", (req, res) => {
-  const id = req.params.id;
-  const photo = getPhotoById(id);
-  res.json(photo.comments);
+  try {
+    const id = req.params.id;
+    const photo = getPhotoById(id);
+
+    if (!photo) {
+      return res.status(404).json({ error: "Photo not found" });
+    }
+
+    res.json(photo.comments);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 router.post("/photos/:id/comments", (req, res) => {
-  const id = req.params.id;
-  const { name, comment } = req.body;
-  const photos = getPhotos();
+  try {
+    const id = req.params.id;
+    const { name, comment } = req.body;
 
-  if (!name || !comment) {
-    res.status(404).json({ error: "Invalid name and id" });
-  }
+    if (!name?.trim() || !comment?.trim()) {
+      return res
+        .status(400)
+        .json({ error: "Name and comment cannot be empty" });
+    }
 
-  const newComment = {
-    id: uuidv4(),
-    name,
-    comment,
-    timestamp: Date.now(),
-  };
+    const photos = getPhotos();
+    const photo = photos.find((photo) => photo.id === id);
 
-  const photo = photos.find((photo) => photo.id === id);
+    if (!photo) {
+      return res.status(404).json({ error: "Photo not found" });
+    }
 
-  if (photo) {
+    const newComment = {
+      id: uuidv4(),
+      name: name.trim(),
+      comment: comment.trim(),
+      timestamp: Date.now(),
+    };
+
     photo.comments.push(newComment);
-    fs.writeFileSync("./data/photos.json", JSON.stringify(photos, null, 2));
-    res.json(newComment);
-  } else {
-    res.status(404).json({ error: "Photo not found" });
+
+    fs.writeFileSync(DATA_FILE, JSON.stringify(photos, null, 2));
+
+    res.status(201).json(newComment);
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
