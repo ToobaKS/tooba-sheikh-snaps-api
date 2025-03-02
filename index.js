@@ -1,0 +1,24 @@
+import express from "express";
+import cors from "cors";
+import "dotenv/config";
+import tags from "./routes/tags.js";
+import photos from "./routes/photos.js";
+
+const app = express();
+const port = process.env.PORT || process.argv[2] || 8080;
+
+app.use(express.json());
+
+const { CORS_ORIGIN } = process.env.CORS_ORIGIN;
+app.use(cors({ origin: CORS_ORIGIN }));
+app.use(cors());
+
+app.use("/images", express.static("public/images"));
+
+app.get("/tags", tags);
+app.get("/photos", photos);
+app.get("/photos/:id", photos);
+app.get("/photos/:id/comments", photos);
+app.post("/photos/:id/comments", photos);
+
+app.listen(port, () => console.log(`Listening on ${port}`));
